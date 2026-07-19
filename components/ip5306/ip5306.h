@@ -1,9 +1,11 @@
 #pragma once
 
 #include "esphome/core/component.h"
-#include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/i2c/i2c.h"
 #include "esphome/components/sensor/sensor.h"
+#include "esphome/components/binary_sensor/binary_sensor.h"
+#include "esphome/components/text_sensor/text_sensor.h"
+#include "esphome/components/switch/switch.h"
 
 namespace esphome {
 namespace ip5306 {
@@ -209,7 +211,7 @@ union RegLevel {
 
 
 
-class IP5306 : public sensor::Sensor, public PollingComponent, public i2c::I2CDevice {
+class IP5306 : public sensor::Sensor, public switch_::Switch, public PollingComponent, public i2c::I2CDevice {
  public:
   void setup() override;
   void update() override;
@@ -219,7 +221,9 @@ class IP5306 : public sensor::Sensor, public PollingComponent, public i2c::I2CDe
   void set_battery_level(sensor::Sensor *sensor) { this->battery_level_ = sensor; }
   void set_charger_connected(binary_sensor::BinarySensor *sensor) { this->charger_connected_ = sensor; }
   void set_charge_full(binary_sensor::BinarySensor *sensor) { this->charge_full_ = sensor; }
-  
+  void set_output_load_sensor(text_sensor::TextSensor *sensor) { this->output_load_ = sensor; }
+  void set_charger_enable_switch(switch_::Switch *sw) { this->charger_enable_ = sw; }
+
   void set_battery_voltage(BatteryVoltage voltage);
   void set_voltage_pressure(VoltagePressure pressure);
 
@@ -229,6 +233,9 @@ class IP5306 : public sensor::Sensor, public PollingComponent, public i2c::I2CDe
   sensor::Sensor *battery_level_{nullptr};
   binary_sensor::BinarySensor *charger_connected_{nullptr};
   binary_sensor::BinarySensor *charge_full_{nullptr};
+  text_sensor::TextSensor *output_load_{nullptr};
+  switch_::Switch *charger_enable_{nullptr};
+  void write_state(bool state) override;
   struct {
     RegSysCtl0 reg_sys_ctl0;
     RegSysCtl1 reg_sys_ctl1;
@@ -236,6 +243,7 @@ class IP5306 : public sensor::Sensor, public PollingComponent, public i2c::I2CDe
     RegChgCtl2 reg_chg_ctl2;
     RegRead0 reg_read0;
     RegRead1 reg_read1;
+    RegRead2 reg_read2;
     RegLevel reg_level;
   } status_{};
 };

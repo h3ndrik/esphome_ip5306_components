@@ -68,15 +68,32 @@ void IP5306::update() {
     this->status_set_warning();
     return;
   }
-  if (this->charger_connected_ != nullptr)
-    this->charger_connected_->publish_state(this->status_.reg_read0.charge_enable);
   if (this->read_register(static_cast<uint8_t>(RegisterMap::READ1), &this->status_.reg_read1.raw, 1) != i2c::ERROR_OK) {
     ESP_LOGW(TAG, "unable to read status");
     this->status_set_warning();
     return;
   }
+  if (this->read_register(static_cast<uint8_t>(RegisterMap::READ2), &this->status_.reg_read2.raw, 1) != i2c::ERROR_OK) {
+    ESP_LOGW(TAG, "unable to read status");
+    this->status_set_warning();
+    return;
+  }
+
+  if (this->charger_connected_ != nullptr)
+    this->charger_connected_->publish_state(this->status_.reg_read0.charge_enable);
   if (this->charge_full_ != nullptr)
     this->charge_full_->publish_state(this->status_.reg_read1.battery_full);
+
+  if (this->output_load_ != nullptr) {
+    if (this->status_.reg_read2.load_level == 0)
+      this->output_load_->publish_state("high");
+    else if (this->status_.reg_read2.load_level == 1)
+      this->output_load_->publish_state("low");
+  }
+
+  if (this->charger_enable_ != nullptr) {
+    this->charger_enable_->publish_state(this->status_.reg_sys_ctl0.charger_enable);
+  }
 }
 
 void IP5306::set_light_load_shutdown_time(ShutdownTime time) {
@@ -95,6 +112,15 @@ void IP5306::set_voltage_pressure(VoltagePressure pressure) {
   this->read_register(static_cast<uint8_t>(RegisterMap::CHG_CTL2), &this->status_.reg_chg_ctl2.raw, 1);
   this->status_.reg_chg_ctl2.voltage_pressure = pressure;
   this->write_register(static_cast<uint8_t>(RegisterMap::CHG_CTL2), &this->status_.reg_chg_ctl2.raw, 1);
+}
+
+void IP5306::write_state(bool state) {
+  if (this->status_.reg_sys_ctl0.charger_enable != state) {
+    this->read_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
+    this->status_.reg_sys_ctl0.charger_enable = state;
+    this->write_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
+  }
+  this->charger_enable_->publish_state(this->status_.reg_sys_ctl0.charger_enable);
 }
 
 }  // namespace ip5306
