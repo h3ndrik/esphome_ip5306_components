@@ -3,12 +3,14 @@ import esphome.config_validation as cv
 from esphome.components import binary_sensor, i2c, sensor
 from esphome.const import CONF_ID, CONF_BATTERY_LEVEL, DEVICE_CLASS_VOLTAGE, ICON_PERCENT, UNIT_PERCENT
 
+DEPENDENCIES = ["i2c"]
+
 MULTI_CONF = True
 
 AUTO_LOAD = [ "binary_sensor", "sensor" ]
 
 ip5306_ns = cg.esphome_ns.namespace('ip5306')
-IP5306 = ip5306_ns.class_('IP5306', i2c.I2CDevice, cg.Component)
+IP5306 = ip5306_ns.class_('IP5306', cg.PollingComponent, i2c.I2CDevice)
 
 CONF_CHARGER_CONNECTED = "charger_connected"
 CONF_CHARGE_FULL = "charge_full"
@@ -17,6 +19,7 @@ CONFIG_SCHEMA = cv.COMPONENT_SCHEMA.extend(
     {
         cv.GenerateID(): cv.declare_id(IP5306),
         cv.Optional(CONF_BATTERY_LEVEL): sensor.sensor_schema(
+            IP5306,
             unit_of_measurement=UNIT_PERCENT,
             icon=ICON_PERCENT,
             accuracy_decimals=0,
@@ -24,7 +27,7 @@ CONFIG_SCHEMA = cv.COMPONENT_SCHEMA.extend(
         cv.Optional(CONF_CHARGER_CONNECTED): binary_sensor.binary_sensor_schema(),
         cv.Optional(CONF_CHARGE_FULL): binary_sensor.binary_sensor_schema(),
     }
-).extend(i2c.i2c_device_schema(0x75))
+).extend(cv.polling_component_schema("60s")).extend(i2c.i2c_device_schema(0x75))
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
