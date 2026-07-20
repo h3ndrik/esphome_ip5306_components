@@ -16,9 +16,14 @@ void IP5306::setup() {
     this->mark_failed();
     return;
   }
+//  this->status_.reg_sys_ctl0.boost_enable = true;
+//  this->status_.reg_sys_ctl0.charger_enable = true;
+//  this->status_.reg_sys_ctl0.power_on_load = true;
+//  this->status_.reg_sys_ctl0.boost_output_enable = true;
+//  this->status_.reg_sys_ctl0.button_shutdown = true;
   this->status_.reg_sys_ctl0.boost_enable = true;
   this->status_.reg_sys_ctl0.charger_enable = true;
-  this->status_.reg_sys_ctl0.power_on_load = true;
+  this->status_.reg_sys_ctl0.power_on_load = false;
   this->status_.reg_sys_ctl0.boost_output_enable = true;
   this->status_.reg_sys_ctl0.button_shutdown = true;
   if (this->write_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1) != i2c::ERROR_OK) {
@@ -33,6 +38,7 @@ void IP5306::setup() {
     return;
   }
   this->status_.reg_sys_ctl1.boost_after_vin_unplug = true;
+  this->status_.reg_sys_ctl1.short_press_boost_switch = true;
   if (this->write_register(static_cast<uint8_t>(RegisterMap::SYS_CTL1), &this->status_.reg_sys_ctl1.raw, 1) != i2c::ERROR_OK) {
     ESP_LOGE(TAG, "setup failed");
     this->mark_failed();
@@ -96,6 +102,30 @@ void IP5306::update() {
   }
 }
 
+void IP5306::set_button_shutdown(bool enabled) {
+  this->read_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
+  this->status_.reg_sys_ctl0.button_shutdown = enabled;
+  this->write_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
+}
+
+void IP5306::set_power_on_load(bool enabled) {
+  this->read_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
+  this->status_.reg_sys_ctl0.power_on_load = enabled;
+  this->write_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
+}
+
+void IP5306::set_boost(bool enabled) {
+  this->read_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
+  this->status_.reg_sys_ctl0.boost_enable = enabled;
+  this->write_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
+}
+
+void IP5306::set_boost_output(bool enabled) {
+  this->read_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
+  this->status_.reg_sys_ctl0.boost_output_enable = enabled;
+  this->write_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
+}
+
 void IP5306::set_light_load_shutdown_time(ShutdownTime time) {
   this->read_register(static_cast<uint8_t>(RegisterMap::SYS_CTL2), &this->status_.reg_sys_ctl2.raw, 1);
   this->status_.reg_sys_ctl2.light_load_shutdown_time = time;
@@ -114,13 +144,14 @@ void IP5306::set_voltage_pressure(VoltagePressure pressure) {
   this->write_register(static_cast<uint8_t>(RegisterMap::CHG_CTL2), &this->status_.reg_chg_ctl2.raw, 1);
 }
 
-void IP5306::write_state(bool state) {
-  if (this->status_.reg_sys_ctl0.charger_enable != state) {
-    this->read_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
-    this->status_.reg_sys_ctl0.charger_enable = state;
-    this->write_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
-  }
-  this->charger_enable_->publish_state(this->status_.reg_sys_ctl0.charger_enable);
+void IP5306::set_charger_enable(bool enabled) {
+  ESP_LOGE(TAG, "set_charger_enable");
+//  if (this->parent_->status_.reg_sys_ctl0.charger_enable != state) {
+  this->read_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
+  this->status_.reg_sys_ctl0.charger_enable = enabled;
+  this->write_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
+//  }
+//  this->publish_state(this->parent_->status_.reg_sys_ctl0.charger_enable);
 }
 
 }  // namespace ip5306

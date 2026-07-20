@@ -211,7 +211,7 @@ union RegLevel {
 
 
 
-class IP5306 : public sensor::Sensor, public switch_::Switch, public PollingComponent, public i2c::I2CDevice {
+class IP5306 : public sensor::Sensor, public PollingComponent, public i2c::I2CDevice {
  public:
   void setup() override;
   void update() override;
@@ -226,7 +226,11 @@ class IP5306 : public sensor::Sensor, public switch_::Switch, public PollingComp
 
   void set_battery_voltage(BatteryVoltage voltage);
   void set_voltage_pressure(VoltagePressure pressure);
-
+  void set_charger_enable(bool enabled);
+  void set_button_shutdown(bool enabled);
+  void set_power_on_load(bool enabled);
+  void set_boost(bool enabled);
+  void set_boost_output(bool enabled);
   void set_light_load_shutdown_time(ShutdownTime time);
 
  protected:
@@ -235,7 +239,7 @@ class IP5306 : public sensor::Sensor, public switch_::Switch, public PollingComp
   binary_sensor::BinarySensor *charge_full_{nullptr};
   text_sensor::TextSensor *output_load_{nullptr};
   switch_::Switch *charger_enable_{nullptr};
-  void write_state(bool state) override;
+
   struct {
     RegSysCtl0 reg_sys_ctl0;
     RegSysCtl1 reg_sys_ctl1;
@@ -246,6 +250,7 @@ class IP5306 : public sensor::Sensor, public switch_::Switch, public PollingComp
     RegRead2 reg_read2;
     RegLevel reg_level;
   } status_{};
+
 };
 
 }  // namespace ip5306
