@@ -48,6 +48,8 @@ void IP5306::setup() {
   set_battery_voltage(BatteryVoltage::BAT_VOLTAGE_4_2);
   set_voltage_pressure(VoltagePressure::PRESSURIZED_28);
   set_light_load_shutdown_time(ShutdownTime::SHUTDOWN_64s);
+  set_charge_current(450);
+  set_end_charge_current(StopCurrent::CURRENT_200);
 }
 
 void IP5306::update() {
@@ -152,6 +154,21 @@ void IP5306::set_charger_enable(bool enabled) {
   this->write_register(static_cast<uint8_t>(RegisterMap::SYS_CTL0), &this->status_.reg_sys_ctl0.raw, 1);
 //  }
 //  this->publish_state(this->parent_->status_.reg_sys_ctl0.charger_enable);
+}
+
+void IP5306::set_charge_current(uint16_t current) {
+  current = esphome::clamp<uint16_t>(current, 50, 3150);
+  uint8_t val = static_cast<uint8_t>((current-50) / 100);
+
+  this->read_register(static_cast<uint8_t>(RegisterMap::CHG_DIG), &this->status_.reg_chg_dig.raw, 1);
+  this->status_.reg_chg_dig.charger_vin_end_current = val;
+  this->write_register(static_cast<uint8_t>(RegisterMap::CHG_DIG), &this->status_.reg_chg_dig.raw, 1);
+}
+
+void IP5306::set_end_charge_current(StopCurrent current) {
+  this->read_register(static_cast<uint8_t>(RegisterMap::CHG_CTL1), &this->status_.reg_chg_ctl1.raw, 1);
+  this->status_.reg_chg_ctl1.end_charge_current_detection = current;
+  this->write_register(static_cast<uint8_t>(RegisterMap::CHG_CTL1), &this->status_.reg_chg_ctl1.raw, 1);
 }
 
 }  // namespace ip5306

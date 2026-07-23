@@ -232,6 +232,8 @@ class IP5306 : public sensor::Sensor, public PollingComponent, public i2c::I2CDe
   void set_boost(bool enabled);
   void set_boost_output(bool enabled);
   void set_light_load_shutdown_time(ShutdownTime time);
+  void set_charge_current(uint16_t current);
+  void set_end_charge_current(StopCurrent current);
 
  protected:
   sensor::Sensor *battery_level_{nullptr};
@@ -244,7 +246,9 @@ class IP5306 : public sensor::Sensor, public PollingComponent, public i2c::I2CDe
     RegSysCtl0 reg_sys_ctl0;
     RegSysCtl1 reg_sys_ctl1;
     RegSysCtl2 reg_sys_ctl2;
+    RegChgCtl1 reg_chg_ctl1;
     RegChgCtl2 reg_chg_ctl2;
+    RegChgDig reg_chg_dig;
     RegRead0 reg_read0;
     RegRead1 reg_read1;
     RegRead2 reg_read2;
